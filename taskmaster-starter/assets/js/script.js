@@ -13,6 +13,8 @@ var createTask = function(taskText, taskDate, taskList) {
   // append span and p element to parent li
   taskLi.append(taskSpan, taskP);
 
+  // checks due date
+  auditTask(taskLi);
 
   // append to ul list on the page
   $("#list-" + taskList).append(taskLi);
@@ -41,10 +43,25 @@ var loadTasks = function() {
   });
 };
 
-var saveTasks = function() {
+var saveTasks = function(){
   localStorage.setItem("tasks", JSON.stringify(tasks));
 };
 
+var auditTask = function(taskEl){
+  // gets date element
+  var date = $(taskEl).find("span").text().trim();
+
+  // sets to local time at 5pm instead of 12am
+  var time = moment(date, "L").set("hour", 17);
+
+  $(taskEl).removeClass("list-group-item-warning list-group-item-danger");
+
+  if (moment().isAfter(time)){
+    $(taskEl).addClass("list-group-item-danger");
+  } else if (Math.abs(moment().diff(time, "days")) <= 2){
+    $(taskEl).addClass("list-group-item-warning");
+  }
+};
 
 // -------EVENT LISTENERS START-------
 
@@ -111,12 +128,16 @@ $(".list-group").on("click", "span", function(){
   // swap out elements
   $(this).replaceWith(dateInput);
 
+  dateInput.datepicker({
+    minDate: 1
+  });
+
   // focus on new element
   dateInput.trigger("focus");
 })
 
 // returns element back to a badge
-$(".list-group").on("blur", "input[type='text']", function(){
+$(".list-group").on("change", "input[type='text']", function(){
   var date = $(this)
     .val()
     .trim();
@@ -126,7 +147,7 @@ $(".list-group").on("blur", "input[type='text']", function(){
     .attr("id")
     .replace("list-", "");
 
-  var index = $(this)
+  var index = $(this)change
     .closest(".list-group-item")
     .index();
 
@@ -138,7 +159,10 @@ $(".list-group").on("blur", "input[type='text']", function(){
     .text(date);
 
   $(this).replaceWith(taskSpan);
-})
+
+  // pass task's <li> element into auditTask() to check new due date
+  auditTask($(taskSpan).closest(".list-group-item"));
+});
 
 // turns every element with list-group to link with other items in same class
 $(".card .list-group").sortable({
@@ -249,6 +273,14 @@ $("#remove-tasks").on("click", function() {
     $("#list-" + key).empty();
   }
   saveTasks();
+});
+
+// adds date picker to modal and when area is closed element updates
+$("#modalDueDate").datepicker({
+  minDate: 1,
+  onClose: function(){
+    $(this).trigger("change");
+  }
 });
 
 // load tasks for the first time
