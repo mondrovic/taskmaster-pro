@@ -147,7 +147,7 @@ $(".list-group").on("change", "input[type='text']", function(){
     .attr("id")
     .replace("list-", "");
 
-  var index = $(this)change
+  var index = $(this)
     .closest(".list-group-item")
     .index();
 
@@ -283,5 +283,13 @@ $("#modalDueDate").datepicker({
   }
 });
 
+// -------MODAL END--------
+
 // load tasks for the first time
 loadTasks();
+
+setInterval(function(){
+  $('.card .list-group-item').each(function (el){
+    auditTask(el);
+  });
+}, (1000 * 60) * 30);
